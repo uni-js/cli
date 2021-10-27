@@ -1,0 +1,34 @@
+{
+  "name": "@uni.js/cli",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "https://github.com/uni-js/cli",
+  "author": "<854185073@qq.com>",
+  "license": "MIT",
+  "bin": {
+    "uni": "bin/uni.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/uni.js",
+    "watch": "gulp watch"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.15.8",
+    "babylon": "^7.0.0-beta.47",
+    "commander": "^8.3.0",
+    "fs-extra": "^10.0.0",
+    "pkg-dir": "5.0.0",
+    "recast": "^0.20.5",
+    "typescript": "^4.4.4"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.15.6",
+    "@types/fs-extra": "^9.0.13",
+    "gulp": "^4.0.2",
+    "gulp-cached": "^1.1.1",
+    "gulp-debug": "^4.0.0",
+    "gulp-remember": "^1.0.1",
+    "gulp-typescript": "^6.0.0-alpha.1"
+  }
+}

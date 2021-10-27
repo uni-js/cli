@@ -1,0 +1,8 @@
+{
+    "codegen":{
+        "sourcePath": "src",
+        "managersPath": "./",
+        "clientManagerImportPath": "./",
+        "internalEventsModulePath": "./"    
+    }
+}
