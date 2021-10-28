@@ -25,7 +25,7 @@ export class ClientManagerGenerator extends FileGenerator{
     }
 
     getRequiredConfigNames(): string[] {
-        return ["managersPath", "clientManagerImportPath", "internalEventsModulePath"];
+        return ["managersPath", "clientManagerImportPath", "clientInternalEventsModulePath"];
     }
 
     getRequiredOptionNames(): string[]{

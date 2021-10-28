@@ -16,6 +16,7 @@ async function bootstrap(){
     program.option('-s, --source <name>','provide source path to code generator');
     program.option('-n, --name <name>','provide class/function name to code generator');
     program.option('-p, --property <name>','provide properties to code generator');
+    program.option('-e, --extends <name>','provide event name that want to extends to code generator');
     
     program.parse();
 

@@ -5,25 +5,12 @@ import * as Path from "path";
 import { readFile, pathExists, writeFile } from "fs-extra"
 
 export const INTERNAL_EVENT = "InternalEvent";
+export const EXTERNAL_EVENT = "ExternalEvent";
 export const DEFAULT_EXPORT_INDEX_FILE = `export {}`;
 
-export class AddInternalEventGenerator extends Generator{
-    getRequiredConfigNames(): string[] {
-        return ["internalEventsModulePath","internalEventsSpecPath"];
-    }
+export abstract class EventGenerator extends Generator{
     getRequiredOptionNames(): string[] {
         return ["name", "property"];
-    }
-    getNames(): string[] {
-        return ["add-in-event"]
-    }
-    getTargetPath() {
-       return Path.resolve(this.getFullPathFromSource(), this.config.internalEventsModulePath,`${this.option.name}.ts`);
-        
-    }
-    private getIndexPath(){
-        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.internalEventsModulePath,'index.ts');
-        return indexPath;
     }
     private async addIndexExport(eventName: string, importPath: string){
         const path = this.getIndexPath();
@@ -52,13 +39,15 @@ export class AddInternalEventGenerator extends Generator{
         await writeFile(path, printTypeScriptAstSource(ast));
         
     }
-    private getEventName(){
+    protected getEventName(){
         const eventName = this.getCamelCaseName(this.option.name);
         return eventName;
     }
-    private getSpecPath(){
-        return this.getFullPathFromSource(this.config.internalEventsSpecPath)
+    
+    protected getSpecPath(){
+        return this.getFullPathFromSource(this.config.eventsSpecPath)
     }
+
     private parsePropertyMap(sourceText: string) {
         const builders = Recast.types.builders;
         const parts = sourceText.split(",");
@@ -94,14 +83,14 @@ export class AddInternalEventGenerator extends Generator{
         const ast = parseTypescriptToAst('');
         const builders = Recast.types.builders;
 
-        const specifier = builders.importSpecifier(builders.identifier(INTERNAL_EVENT),builders.identifier(INTERNAL_EVENT));
+        const specifier = builders.importSpecifier(builders.identifier(this.getSpecImportedKey()),builders.identifier(this.getSpecImportedKey()));
         const importPathLiteral = builders.stringLiteral(this.getImportPath(this.getTargetPath(),this.getSpecPath()));
         ast.program.body.push(builders.importDeclaration([specifier],importPathLiteral));
 
         ast.program.body.push(builders.exportNamedDeclaration(
             builders.classDeclaration(builders.identifier(this.getEventName()),builders.classBody(
                 this.parsePropertyMap(this.option.property)
-            ), builders.identifier(INTERNAL_EVENT))
+            ), builders.identifier(this.getSpecImportedKey()))
         ));
 
         return printTypeScriptAstSource(ast);
@@ -111,6 +100,107 @@ export class AddInternalEventGenerator extends Generator{
         await this.addIndexExport(this.getEventName(), importPath);
 
         return writeFile(this.getTargetPath(), this.generateSource());
+    }
+
+    abstract getIndexPath() : string;
+    abstract getSpecImportedKey() : string;
+        
+}
+
+export class ClientInternalEventGenerator extends EventGenerator {
+    getRequiredConfigNames(): string[] {
+        return ["clientInternalEventsModulePath","eventsSpecPath"];
+    }
+    getNames(): string[] {
+        return ["client-internal-event", "cie"]
+    }
+    getTargetPath() {
+        return Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,`${this.option.name}.ts`);   
+    }
+    getIndexPath(){
+        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,'index.ts');
+        return indexPath;
+    }
+    getSpecImportedKey(){
+        return INTERNAL_EVENT;
+    }
+
+ 
+}
+
+export class ServerInternalEventGenerator extends EventGenerator {
+    getRequiredConfigNames(): string[] {
+        return ["serverInternalEventsModulePath","eventsSpecPath"];
+    }
+    getNames(): string[] {
+        return ["server-internal-event", "sie"]
+    }
+    getTargetPath() {
+        return Path.resolve(this.getFullPathFromSource(), this.config.serverInternalEventsModulePath,`${this.option.name}.ts`);   
+    }
+    getIndexPath(){
+        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,'index.ts');
+        return indexPath;
+    }
+    getSpecImportedKey(){
+        return INTERNAL_EVENT;
+    }
+
+}
+
+export class ClientExternalEventGenerator extends EventGenerator{
+    getRequiredOptionNames(): string[] {
+        return [];
+    }
+    getRequiredConfigNames(): string[] {
+        return [
+            "eventsSpecPath",
+            "clientExternalEventsModulePath",
+            "clientInternalEventsModulePath",
+        ];
+    }
+    getNames(): string[] {
+        return ["client-external-event", "cee"]
+    }
+    getTargetPath() {
+        return Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,`${this.option.name || this.option.extends}.ts`);   
+    }
+    getIndexPath(){
+        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,'index.ts');
+        return indexPath;
+    }
+    getSpecImportedKey(){
+        return EXTERNAL_EVENT;
+    }
+
+    protected getEventName(){
+        return this.getCamelCaseName(this.option.name || this.option.extends);
+    }
+
+    generateSource(): string {
+        if(this.option.extends){
+            const extending = this.getCamelCaseName(this.option.extends);
+
+            const ast = parseTypescriptToAst('');
+            const builders = Recast.types.builders;
+   
+            const nameSpaceSpecifier = builders.importNamespaceSpecifier(builders.identifier("InternalEvents"));
+            const internalPathLiteral = builders.stringLiteral(this.getImportPath(this.getTargetPath(),this.getFullPathFromSource(this.config.clientInternalEventsModulePath)));
+            ast.program.body.push(builders.importDeclaration([nameSpaceSpecifier],internalPathLiteral));
+            ast.program.body.push(
+                builders.exportNamedDeclaration(
+                    builders.classDeclaration(
+                        builders.identifier(this.getEventName()), 
+                        builders.classBody([]), 
+                        builders.memberExpression(builders.identifier("InternalEvents"), builders.identifier(extending))
+                    )
+                ));
+
+            return printTypeScriptAstSource(ast);
+        }else{
+            return super.generateSource.call(this);
+        }
+
     }
 
 }
