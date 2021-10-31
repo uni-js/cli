@@ -25,7 +25,7 @@ export abstract class EventGenerator extends Generator{
         const body = ast.program.body;
         const builders = Recast.types.builders;
         for(const line of body){
-            if(line.type === "ImportDeclaration" && line.specifiers[0]?.imported?.name === this.getEventName()){
+            if(line.type === "ImportDeclaration" && line.specifiers[0]?.imported?.name === this.getCamelCaseName(this.getEventName())){
                 return;
             }
 
@@ -40,8 +40,7 @@ export abstract class EventGenerator extends Generator{
         
     }
     protected getEventName(){
-        const eventName = this.getCamelCaseName(this.option.name);
-        return eventName;
+        return `${this.option.name}-event`;
     }
     
     protected getSpecPath(){
@@ -64,7 +63,7 @@ export abstract class EventGenerator extends Generator{
 
         return properties;
     }
-    private parseTypeNameToAnnotation(typeName: string = "string") {
+    private parseTypeNameToAnnotation(typeName: string = "any") {
         const builders = Recast.types.builders;
         if(typeName === "string")
             return builders.tsStringKeyword();
@@ -72,6 +71,8 @@ export abstract class EventGenerator extends Generator{
             return builders.tsBooleanKeyword();
         else if(typeName === "number")
             return builders.tsNumberKeyword();
+        else if(typeName === "any")
+            return builders.tsAnyKeyword();
         else{
             throw new Error(`not a valid type name: ${typeName}`);
         }
@@ -88,7 +89,7 @@ export abstract class EventGenerator extends Generator{
         ast.program.body.push(builders.importDeclaration([specifier],importPathLiteral));
 
         ast.program.body.push(builders.exportNamedDeclaration(
-            builders.classDeclaration(builders.identifier(this.getEventName()),builders.classBody(
+            builders.classDeclaration(builders.identifier(this.getCamelCaseName(this.getEventName())),builders.classBody(
                 this.parsePropertyMap(this.option.property)
             ), builders.identifier(this.getSpecImportedKey()))
         ));
@@ -97,7 +98,7 @@ export abstract class EventGenerator extends Generator{
     }
     async generate(): Promise<void> {
         const importPath = this.getImportPath(this.getIndexPath(), this.getTargetPath())
-        await this.addIndexExport(this.getEventName(), importPath);
+        await this.addIndexExport(this.getCamelCaseName(this.getEventName()), importPath);
 
         return writeFile(this.getTargetPath(), this.generateSource());
     }
@@ -115,7 +116,7 @@ export class ClientInternalEventGenerator extends EventGenerator {
         return ["client-internal-event", "cie"]
     }
     getTargetPath() {
-        return Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,`${this.option.name}.ts`);   
+        return Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,`${this.option.name}-event.ts`);   
     }
     getIndexPath(){
         const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,'index.ts');
@@ -136,10 +137,10 @@ export class ServerInternalEventGenerator extends EventGenerator {
         return ["server-internal-event", "sie"]
     }
     getTargetPath() {
-        return Path.resolve(this.getFullPathFromSource(), this.config.serverInternalEventsModulePath,`${this.option.name}.ts`);   
+        return Path.resolve(this.getFullPathFromSource(), this.config.serverInternalEventsModulePath,`${this.option.name}-event.ts`);   
     }
     getIndexPath(){
-        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientInternalEventsModulePath,'index.ts');
+        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.serverInternalEventsModulePath,'index.ts');
         return indexPath;
     }
     getSpecImportedKey(){
@@ -148,33 +149,16 @@ export class ServerInternalEventGenerator extends EventGenerator {
 
 }
 
-export class ClientExternalEventGenerator extends EventGenerator{
+export abstract class ExternalEventGenerator extends EventGenerator{
     getRequiredOptionNames(): string[] {
         return [];
-    }
-    getRequiredConfigNames(): string[] {
-        return [
-            "eventsSpecPath",
-            "clientExternalEventsModulePath",
-            "clientInternalEventsModulePath",
-        ];
-    }
-    getNames(): string[] {
-        return ["client-external-event", "cee"]
-    }
-    getTargetPath() {
-        return Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,`${this.option.name || this.option.extends}.ts`);   
-    }
-    getIndexPath(){
-        const indexPath = Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,'index.ts');
-        return indexPath;
     }
     getSpecImportedKey(){
         return EXTERNAL_EVENT;
     }
 
     protected getEventName(){
-        return this.getCamelCaseName(this.option.name || this.option.extends);
+        return `${this.option.name || this.option.extends}-event`;
     }
 
     generateSource(): string {
@@ -184,15 +168,15 @@ export class ClientExternalEventGenerator extends EventGenerator{
             const ast = parseTypescriptToAst('');
             const builders = Recast.types.builders;
    
-            const nameSpaceSpecifier = builders.importNamespaceSpecifier(builders.identifier("InternalEvents"));
-            const internalPathLiteral = builders.stringLiteral(this.getImportPath(this.getTargetPath(),this.getFullPathFromSource(this.config.clientInternalEventsModulePath)));
+            const nameSpaceSpecifier = builders.importNamespaceSpecifier(builders.identifier(this.getNamespaceKey()));
+            const internalPathLiteral = builders.stringLiteral(this.getImportPath(this.getTargetPath(),this.getFullPathFromSource(this.getEventModulePath())));
             ast.program.body.push(builders.importDeclaration([nameSpaceSpecifier],internalPathLiteral));
             ast.program.body.push(
                 builders.exportNamedDeclaration(
                     builders.classDeclaration(
-                        builders.identifier(this.getEventName()), 
+                        builders.identifier(this.getCamelCaseName(this.getEventName())), 
                         builders.classBody([]), 
-                        builders.memberExpression(builders.identifier("InternalEvents"), builders.identifier(extending))
+                        builders.memberExpression(builders.identifier(this.getNamespaceKey()), builders.identifier(extending))
                     )
                 ));
 
@@ -203,4 +187,63 @@ export class ClientExternalEventGenerator extends EventGenerator{
 
     }
 
+    protected getNamespaceKey(){
+        return "InternalEvents";
+    }
+
+    protected abstract getEventModulePath(): string;
+    
+}
+
+export class ClientExternalEventGenerator extends ExternalEventGenerator{
+    getRequiredConfigNames(): string[] {
+        return [
+            "eventsSpecPath",
+            "clientExternalEventsModulePath",
+            "clientInternalEventsModulePath",
+        ];
+    }
+
+    getNames(): string[] {
+        return ["client-external-event", "cee"]
+    }
+
+    getIndexPath(){
+        return Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,'index.ts');
+    }
+    
+    getTargetPath() {
+        return Path.resolve(this.getFullPathFromSource(), this.config.clientExternalEventsModulePath,`${this.option.name || this.option.extends}-event.ts`);   
+    }
+
+    protected getEventModulePath(): string {
+        return this.config.clientInternalEventsModulePath;
+    }
+
+}
+
+export class ServerExternalEventGenerator extends ExternalEventGenerator{
+    getRequiredConfigNames(): string[] {
+        return [
+            "eventsSpecPath",
+            "serverExternalEventsModulePath",
+            "serverInternalEventsModulePath",
+        ];
+    }
+
+    getNames(): string[] {
+        return ["server-external-event", "see"]
+    }
+
+    getIndexPath(){
+        return Path.resolve(this.getFullPathFromSource(), this.config.serverExternalEventsModulePath,'index.ts');
+    }
+
+    getTargetPath() {
+        return Path.resolve(this.getFullPathFromSource(), this.config.serverExternalEventsModulePath,`${this.option.name || this.option.extends}-event.ts`);   
+    }
+
+    protected getEventModulePath(): string {
+        return this.config.serverInternalEventsModulePath;
+    }
 }

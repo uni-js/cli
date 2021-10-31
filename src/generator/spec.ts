@@ -65,6 +65,10 @@ export abstract class Generator implements IGenerator{
         return result.split(Path.sep).join("/");
     }
 
+    protected getImportPathToTarget(relPath: string){
+        return this.getImportPath(this.getTargetPath(), this.getFullPathFromSource(relPath))
+    }
+
     abstract generate(): Promise<void>;
 
     abstract generateSource(source?: string): string;
@@ -122,16 +126,18 @@ export class GeneratorInstanceProvider{
         }
     }
 
-    getAllNames(){
-        return this.generatorsArray.map((generator)=>{
-            return generator.getNames();
-        }).flat();
+    getAllImpls(): ConfigGeneratorImpl[]{
+        return Array.from(this.generators.keys());
     }
 
     getGeneratorByName(name: string){
         return this.generatorsArray.find((generator)=>{
             return generator.getNames().indexOf(name) !== -1;
         })
+    }
+
+    getGenerator(impl: ConfigGeneratorImpl){
+        return this.generators.get(impl);
     }
     
 }

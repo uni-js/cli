@@ -1,14 +1,25 @@
 import { ClientManagerGenerator } from "./client-manager";
+import { ServerManagerGenerator } from "./server-manager";
 import { 
     ClientInternalEventGenerator, 
     ServerInternalEventGenerator,
-    ClientExternalEventGenerator
-} from "./internal-event";
+    ClientExternalEventGenerator,
+    ServerExternalEventGenerator
+} from "./event";
+import { ClientControllerGenerator, AddClientExternalEventHandlerGenerator } from "./client-controller";
+import { ServerControllerGenerator, AddServerExternalEventHandlerGenerator } from "./server-controller";
+
 import { ConfigGeneratorImpl } from "./spec";
 
 export const Generators : ConfigGeneratorImpl[] = [ 
     ClientManagerGenerator, 
+    ServerManagerGenerator,
     ClientInternalEventGenerator, 
     ServerInternalEventGenerator,
-    ClientExternalEventGenerator
+    ClientExternalEventGenerator,
+    ServerExternalEventGenerator,
+    ClientControllerGenerator,
+    ServerControllerGenerator,
+    AddClientExternalEventHandlerGenerator,
+    AddServerExternalEventHandlerGenerator
 ];
