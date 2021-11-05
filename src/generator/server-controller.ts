@@ -36,17 +36,18 @@ export class ServerControllerGenerator extends FileGenerator {
   }
 
   getRequiredConfigNames(): string[] {
-    return ["serverControllersPath", "serverControllerSpecPath", "serverInternalEventsModulePath", "serverExternalEventsModulePath", "serverExternalEventsModulePath", "eventsSpecPath", "eventBusClientSpecPath"];
+    return ["serverModulePath", "serverControllerSpecPath", "serverInternalEventsModulePath", "serverExternalEventsModulePath", "serverExternalEventsModulePath", "eventsSpecPath", "eventBusClientSpecPath"];
   }
 
   getRequiredOptionNames(): string[] {
-    return ["name"];
+    return ["name", "module"];
   }
 
   getTargetPath(): string {
     return Path.join(
       this.getFullPathFromSource(),
-      this.config.serverManagersPath,
+      this.config.serverModulePath,
+      this.option.module || "",
       `${this.getName()}.ts`
     );
   }
@@ -81,10 +82,10 @@ export class ServerControllerGenerator extends FileGenerator {
 
 export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
   getRequiredConfigNames(): string[] {
-    return ["serverControllersPath"]
+    return ["serverModulePath"]
   }
   getRequiredOptionNames(): string[] {
-    return ["name", "event"];
+    return ["name", "event", "module"];
   }
   getNames(): string[] {
     return ["server-external-event-handler", "seeh"]
@@ -92,7 +93,8 @@ export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
   getTargetPath(): string {
     return Path.join(
       this.getFullPathFromSource(),
-      this.config.serverControllersPath,
+      this.config.serverModulePath,
+      this.option.module || "",
       `${this.getControllerName()}.ts`
     );
   }

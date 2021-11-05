@@ -25,17 +25,18 @@ export class ClientManagerGenerator extends FileGenerator {
     }
 
     getRequiredConfigNames(): string[] {
-        return ["clientManagersPath", "clientManagerSpecPath", "clientInternalEventsModulePath"];
+        return ["clientModulePath", "clientManagerSpecPath", "clientInternalEventsModulePath"];
     }
 
     getRequiredOptionNames(): string[] {
-        return ["name"];
+        return ["name", "module"];
     }
 
     getTargetPath(): string {
         return Path.join(
             this.getFullPathFromSource(),
-            this.config.clientManagersPath,
+            this.config.clientModulePath,
+            this.option.module || "",
             `${this.getName()}.ts`
         );
     }

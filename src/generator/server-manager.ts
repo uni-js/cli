@@ -25,17 +25,18 @@ export class ServerManagerGenerator extends FileGenerator {
     }
 
     getRequiredConfigNames(): string[] {
-        return ["serverManagersPath", "serverManagerSpecPath", "serverInternalEventsModulePath"];
+        return ["serverModulePath", "serverManagerSpecPath", "serverInternalEventsModulePath"];
     }
 
     getRequiredOptionNames(): string[] {
-        return ["name"];
+        return ["name", "module"];
     }
 
     getTargetPath(): string {
         return Path.join(
             this.getFullPathFromSource(),
-            this.config.serverManagersPath,
+            this.config.serverModulePath,
+            this.option.module || "",
             `${this.getName()}.ts`
         );
     }
