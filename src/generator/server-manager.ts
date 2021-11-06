@@ -1,10 +1,9 @@
-import { parseTypescriptToAst, printTypeScriptAstSource } from "../recast";
-import { FileGenerator } from "./spec";
-import { getCamelCaseName } from "../utils";
-import Path from "path";
+import { parseTypescriptToAst, printTypeScriptAstSource } from '../recast';
+import { FileGenerator } from './spec';
+import { getCamelCaseName } from '../utils';
+import Path from 'path';
 
-const TEMPLATE =
-    `
+const TEMPLATE = `
 import { inject, injectable } from 'inversify';
 import { ServerSideManager } from '{SERVER_MANAGER_DEFINE_PATH}';
 
@@ -18,47 +17,44 @@ export class NewServerSideManager extends ServerSideManager {
     }
 
 }
-`
+`;
 
 export class ServerManagerGenerator extends FileGenerator {
-    getNames(): string[] {
-        return ["server-manager", "sm"];
-    }
+	getNames(): string[] {
+		return ['server-manager', 'sm'];
+	}
 
-    getRequiredConfigNames(): string[] {
-        return ["serverModulePath", "serverManagerSpecPath", "serverInternalEventsModulePath"];
-    }
+	getRequiredConfigNames(): string[] {
+		return ['serverModulePath', 'serverManagerSpecPath', 'serverInternalEventsModulePath'];
+	}
 
-    getRequiredOptionNames(): string[] {
-        return ["name", "modulePath", "module"];
-    }
+	getRequiredOptionNames(): string[] {
+		return ['name', 'modulePath', 'module'];
+	}
 
-    getTargetPath(): string {
-        return Path.join(
-            this.getFullPathFromSource(),
-            this.config.serverModulePath,
-            this.option.modulePath || "",
-            `${this.getName()}.ts`
-        );
-    }
+	getModuleExportAtProperty() {
+		return 'managers';
+	}
 
-    private getName() {
-        return `${this.option.name}-manager`;
-    }
+	getTargetPath(): string {
+		return Path.join(this.getFullPathFromSource(), this.config.serverModulePath, this.option.modulePath || '', `${this.getName()}.ts`);
+	}
 
-    generateSource(source?: string): string {
-        if (!this.option.name)
-            throw new Error(`must provide 'name' option to generate a server manager`);
+	getName() {
+		return `${this.option.name}-manager`;
+	}
 
-        const ast = parseTypescriptToAst(TEMPLATE);
+	generateSource(source?: string): string {
+		if (!this.option.name) throw new Error(`must provide 'name' option to generate a server manager`);
 
-        ast.program.body[1].source.value = this.getImportPathToTarget(this.config.serverManagerSpecPath);
+		const ast = parseTypescriptToAst(TEMPLATE);
 
-        ast.program.body[2].source.value = this.getImportPathToTarget(this.config.serverInternalEventsModulePath);
+		ast.program.body[1].source.value = this.getImportPathToTarget(this.config.serverManagerSpecPath);
 
-        ast.program.body[3].declaration.id.name = getCamelCaseName(this.getName());
+		ast.program.body[2].source.value = this.getImportPathToTarget(this.config.serverInternalEventsModulePath);
 
-        return printTypeScriptAstSource(ast);
-    }
+		ast.program.body[3].declaration.id.name = getCamelCaseName(this.getName());
 
+		return printTypeScriptAstSource(ast);
+	}
 }

@@ -11,13 +11,15 @@
   "scripts": {
     "build": "tsc",
     "start": "node bin/uni.js",
-    "watch": "gulp watch"
+    "watch": "gulp watch",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
     "@babel/parser": "^7.15.8",
     "babylon": "^7.0.0-beta.47",
     "commander": "^8.3.0",
     "fs-extra": "^10.0.0",
+    "locate-path": "6.0.0",
     "pkg-dir": "5.0.0",
     "recast": "^0.20.5",
     "typescript": "^4.4.4"
@@ -29,6 +31,7 @@
     "gulp-cached": "^1.1.1",
     "gulp-debug": "^4.0.0",
     "gulp-remember": "^1.0.1",
-    "gulp-typescript": "^6.0.0-alpha.1"
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "prettier": "^2.4.1"
   }
 }
