@@ -1,5 +1,6 @@
 import { parseTypescriptToAst, printTypeScriptAstSource } from "../recast";
 import { FileGenerator } from "./spec";
+import { getCamelCaseName } from "../utils";
 import Path from "path";
 
 const TEMPLATE =
@@ -29,14 +30,15 @@ export class ClientManagerGenerator extends FileGenerator {
     }
 
     getRequiredOptionNames(): string[] {
-        return ["name", "module"];
+        return ["name", "modulePath", "module"];
     }
 
     getTargetPath(): string {
         return Path.join(
             this.getFullPathFromSource(),
             this.config.clientModulePath,
-            this.option.module || "",
+            this.option.modulePath || "",
+            `${this.option.module}-module`,
             `${this.getName()}.ts`
         );
     }
@@ -55,7 +57,7 @@ export class ClientManagerGenerator extends FileGenerator {
 
         ast.program.body[2].source.value = this.getImportPathToTarget(this.config.clientInternalEventsModulePath);
 
-        ast.program.body[3].declaration.id.name = this.getCamelCaseName(this.getName());
+        ast.program.body[3].declaration.id.name = getCamelCaseName(this.getName());
 
         return printTypeScriptAstSource(ast);
     }

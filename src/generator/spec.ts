@@ -6,7 +6,6 @@ export interface IGenerator{
     getRequiredConfigNames(): string[];
     getNames(): string[];
     generate(): Promise<void>;
-    generateSource(source?:string): string;
     setOption(option: any): void;
 };
 
@@ -26,7 +25,7 @@ export abstract class Generator implements IGenerator{
     }
     private validateOption(option: any){
         for(const key of this.getRequiredOptionNames()){
-            if(!option[key])
+            if(option[key] === undefined)
                 throw new Error(`option: '${key}' must be provided`);
         }
     }
@@ -40,23 +39,6 @@ export abstract class Generator implements IGenerator{
         return Path.resolve(this.config.sourcePath, relPath);
     }
 
-    /**
-     * 将 aaa-bbb-ccc 格式字符串转为
-     * 驼峰式命名法的字符串 AaaBbbCcc
-     * 
-     * @param lowerCaseStart 以小写字母开头, 即小驼峰命名法
-     */
-    protected getCamelCaseName(name: string, lowerCaseStart: boolean = false){
-        return name.split("-").map((part, index)=>{
-            const firstLetter = index == 0 && lowerCaseStart ? part[0].toLowerCase() : part[0].toUpperCase()
-            return firstLetter + part.slice(1);
-        }).join("");
-    }
-
-    protected getTargetDirPath(){
-        return Path.dirname(this.getTargetPath());
-    }
-
     protected getImportPath(pathFrom:string, pathTo: string){
         const relPath = Path.relative(Path.dirname(pathFrom), pathTo);
         const parsed = Path.parse(relPath)
@@ -65,24 +47,29 @@ export abstract class Generator implements IGenerator{
         return result.split(Path.sep).join("/");
     }
 
-    protected getImportPathToTarget(relPath: string){
-        return this.getImportPath(this.getTargetPath(), this.getFullPathFromSource(relPath))
-    }
-
     abstract generate(): Promise<void>;
 
-    abstract generateSource(source?: string): string;
     abstract getRequiredConfigNames(): string[];
     abstract getRequiredOptionNames(): string[];
     abstract getNames(): string[];
 
-    abstract getTargetPath(): string;
 }
 
 export abstract class FileGenerator extends Generator{
     async generate(): Promise<void>{
         return writeFile(this.getTargetPath(), this.generateSource());
     };
+
+    protected getTargetDirPath(){
+        return Path.dirname(this.getTargetPath());
+    }
+
+    protected getImportPathToTarget(relPath: string){
+        return this.getImportPath(this.getTargetPath(), this.getFullPathFromSource(relPath))
+    }
+
+    abstract getTargetPath(): string;
+    abstract generateSource(source?: string): string;
 }
 
 export abstract class CodeGenerator extends Generator{
@@ -96,6 +83,14 @@ export abstract class CodeGenerator extends Generator{
         const sourceBuffer = await readFile(this.getTargetPath());
         return writeFile(this.getTargetPath(), this.generateSource(sourceBuffer.toString()));
     };
+
+    protected getTargetDirPath(){
+        return Path.dirname(this.getTargetPath());
+    }
+    
+    protected getImportPathToTarget(relPath: string){
+        return this.getImportPath(this.getTargetPath(), this.getFullPathFromSource(relPath))
+    }
 
     getTargetPath(){
         return this.config.source;

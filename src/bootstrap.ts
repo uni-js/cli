@@ -18,7 +18,8 @@ async function bootstrap() {
     program.option('-p, --property <name>', 'provide properties to code generator');
     program.option('-x, --extends <name>', 'provide name that want to extends to code generator');
     program.option('-e, --event <name>', 'provide event name to code generator');
-    program.option('-m, --module <name>', 'provider module path to code generator');
+    program.option('-p, --module-path <name>', 'provider module path to code generator');
+    program.option('-m, --module <name>', 'provider module name to code generator');
 
     program.addHelpText("afterAll", BuildGeneratorsHelpText(provider));
 

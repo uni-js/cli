@@ -1,6 +1,7 @@
 import { parseTypescriptToAst, printTypeScriptAstSource } from "../recast";
 import { CodeGenerator, FileGenerator } from "./spec";
 import * as Recast from "recast";
+import { getCamelCaseName } from "../utils";
 import Path from "path";
 
 const TEMPLATE =
@@ -40,14 +41,14 @@ export class ServerControllerGenerator extends FileGenerator {
   }
 
   getRequiredOptionNames(): string[] {
-    return ["name", "module"];
+    return ["name", "modulePath", "module"];
   }
 
   getTargetPath(): string {
     return Path.join(
       this.getFullPathFromSource(),
       this.config.serverModulePath,
-      this.option.module || "",
+      this.option.modulePath || "",
       `${this.getName()}.ts`
     );
   }
@@ -74,7 +75,7 @@ export class ServerControllerGenerator extends FileGenerator {
 
     ast.program.body[6].source.value = this.getImportPathToTarget(this.config.serverControllerSpecPath);
 
-    ast.program.body[7].declaration.id.name = this.getCamelCaseName(this.getName());
+    ast.program.body[7].declaration.id.name = getCamelCaseName(this.getName());
 
     return printTypeScriptAstSource(ast);
   }
@@ -85,7 +86,7 @@ export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
     return ["serverModulePath"]
   }
   getRequiredOptionNames(): string[] {
-    return ["name", "event", "module"];
+    return ["name", "event", "module", "modulePath"];
   }
   getNames(): string[] {
     return ["server-external-event-handler", "seeh"]
@@ -94,14 +95,14 @@ export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
     return Path.join(
       this.getFullPathFromSource(),
       this.config.serverModulePath,
-      this.option.module || "",
+      this.option.modulePath || "",
       `${this.getControllerName()}.ts`
     );
   }
   generateSource(source: string): string {
     const ast = parseTypescriptToAst(source);
     const line = ast.program.body.find((line: any) => {
-      return line.type === "ExportNamedDeclaration" && line.declaration.type === "ClassDeclaration" && line.declaration.id?.name === this.getCamelCaseName(this.getControllerName());
+      return line.type === "ExportNamedDeclaration" && line.declaration.type === "ClassDeclaration" && line.declaration.id?.name === getCamelCaseName(this.getControllerName());
     });
 
     if (!line)
@@ -111,16 +112,16 @@ export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
 
     const builders = Recast.types.builders;
 
-    const methodKey = builders.identifier(`handle${this.getCamelCaseName(this.getEventName())}`);
+    const methodKey = builders.identifier(`handle${getCamelCaseName(this.getEventName())}`);
 
     const methodEventParam = builders.identifier.from({
       name: "event",
-      typeAnnotation: builders.tsTypeAnnotation(builders.tsTypeReference(builders.tsQualifiedName(builders.identifier("ClientEvents"), builders.identifier(this.getCamelCaseName(this.getEventName())))))
+      typeAnnotation: builders.tsTypeAnnotation(builders.tsTypeReference(builders.tsQualifiedName(builders.identifier("ClientEvents"), builders.identifier(getCamelCaseName(this.getEventName())))))
     });
 
     const methodParams = [methodEventParam];
 
-    const decoratorParam = builders.memberExpression(builders.identifier("ClientEvents"), builders.identifier(this.getCamelCaseName(this.getEventName())));
+    const decoratorParam = builders.memberExpression(builders.identifier("ClientEvents"), builders.identifier(getCamelCaseName(this.getEventName())));
 
     const decorator = builders.decorator(builders.callExpression(builders.identifier("HandleExternalEvent"), [decoratorParam]));
 

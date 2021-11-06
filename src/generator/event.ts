@@ -3,6 +3,7 @@ import { parseTypescriptToAst, printTypeScriptAstSource } from "../recast";
 import { Generator } from "./spec";
 import * as Path from "path";
 import { readFile, pathExists, writeFile } from "fs-extra"
+import { getCamelCaseName } from "../utils";
 
 export const INTERNAL_EVENT = "InternalEvent";
 export const EXTERNAL_EVENT = "ExternalEvent";
@@ -25,7 +26,7 @@ export abstract class EventGenerator extends Generator{
         const body = ast.program.body;
         const builders = Recast.types.builders;
         for(const line of body){
-            if(line.type === "ImportDeclaration" && line.specifiers[0]?.imported?.name === this.getCamelCaseName(this.getEventName())){
+            if(line.type === "ImportDeclaration" && line.specifiers[0]?.imported?.name === getCamelCaseName(this.getEventName())){
                 return;
             }
 
@@ -56,7 +57,7 @@ export abstract class EventGenerator extends Generator{
             const [propertyName, typeName] = part.split(":");
             
             properties.push(builders.classProperty(
-                builders.identifier(this.getCamelCaseName(propertyName, true)),null,
+                builders.identifier(getCamelCaseName(propertyName, true)),null,
                 builders.tsTypeAnnotation(this.parseTypeNameToAnnotation(typeName))
             ));
         }
@@ -89,7 +90,7 @@ export abstract class EventGenerator extends Generator{
         ast.program.body.push(builders.importDeclaration([specifier],importPathLiteral));
 
         ast.program.body.push(builders.exportNamedDeclaration(
-            builders.classDeclaration(builders.identifier(this.getCamelCaseName(this.getEventName())),builders.classBody(
+            builders.classDeclaration(builders.identifier(getCamelCaseName(this.getEventName())),builders.classBody(
                 this.parsePropertyMap(this.option.property)
             ), builders.identifier(this.getSpecImportedKey()))
         ));
@@ -98,13 +99,14 @@ export abstract class EventGenerator extends Generator{
     }
     async generate(): Promise<void> {
         const importPath = this.getImportPath(this.getIndexPath(), this.getTargetPath())
-        await this.addIndexExport(this.getCamelCaseName(this.getEventName()), importPath);
+        await this.addIndexExport(getCamelCaseName(this.getEventName()), importPath);
 
         return writeFile(this.getTargetPath(), this.generateSource());
     }
 
     abstract getIndexPath() : string;
     abstract getSpecImportedKey() : string;
+    abstract getTargetPath() : string;
         
 }
 
@@ -163,7 +165,7 @@ export abstract class ExternalEventGenerator extends EventGenerator{
 
     generateSource(): string {
         if(this.option.extends){
-            const extending = this.getCamelCaseName(this.option.extends);
+            const extending = getCamelCaseName(this.option.extends);
 
             const ast = parseTypescriptToAst('');
             const builders = Recast.types.builders;
@@ -174,7 +176,7 @@ export abstract class ExternalEventGenerator extends EventGenerator{
             ast.program.body.push(
                 builders.exportNamedDeclaration(
                     builders.classDeclaration(
-                        builders.identifier(this.getCamelCaseName(this.getEventName())), 
+                        builders.identifier(getCamelCaseName(this.getEventName())), 
                         builders.classBody([]), 
                         builders.memberExpression(builders.identifier(this.getNamespaceKey()), builders.identifier(extending))
                     )
