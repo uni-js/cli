@@ -71,7 +71,7 @@ export class ClientModuleGenerator extends Generator {
 			this.getFullPathFromSource(this.config.moduleSpecPath),
 		);
 		const specifier = ast.program.body[0].specifiers[0];
-		specifier.imported = specifier.local = builders.identifier('createServerSideModule');
+		specifier.imported = specifier.local = builders.identifier('createClientSideModule');
 
 		ast.program.body[1].declaration.declarations[0].id = getCamelCaseName(this.getModuleName());
 		ast.program.body[1].declaration.declarations[0].init.callee.name = 'createClientSideModule';
