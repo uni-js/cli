@@ -96,7 +96,7 @@ export class AddServerExternalEventHandlerGenerator extends CodeGenerator {
 		return ['serverModulePath'];
 	}
 	getRequiredOptionNames(): string[] {
-		return ['name', 'event', 'module', 'modulePath'];
+		return ['name', 'event', 'module'];
 	}
 	getNames(): string[] {
 		return ['server-external-event-handler', 'seeh'];

@@ -95,7 +95,7 @@ export class AddClientExternalEventHandlerGenerator extends CodeGenerator {
 		return ['clientModulePath'];
 	}
 	getRequiredOptionNames(): string[] {
-		return ['name', 'event', 'module', 'modulePath'];
+		return ['name', 'event', 'module'];
 	}
 	getNames(): string[] {
 		return ['client-external-event-handler', 'ceeh'];
