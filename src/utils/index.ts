@@ -7,6 +7,7 @@
 export function getCamelCaseName(name: string, lowerCaseStart: boolean = false) {
 	return name
 		.split('-')
+		.filter((str) => str.length > 0)
 		.map((part, index) => {
 			const firstLetter = index == 0 && lowerCaseStart ? part[0].toLowerCase() : part[0].toUpperCase();
 			return firstLetter + part.slice(1);

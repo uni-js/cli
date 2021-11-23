@@ -11,7 +11,7 @@ export const DEFAULT_EXPORT_INDEX_FILE = `export {}`;
 
 export abstract class EventGenerator extends Generator {
 	getRequiredOptionNames(): string[] {
-		return ['name', 'property'];
+		return ['name'];
 	}
 	private async addIndexExport(eventName: string, importPath: string) {
 		const path = this.getIndexPath();
@@ -55,7 +55,7 @@ export abstract class EventGenerator extends Generator {
 
 	private parsePropertyMap(sourceText: string) {
 		const builders = Recast.types.builders;
-		const parts = sourceText.split(',');
+		const parts = sourceText.split(',').filter((str) => str.length > 0);
 		const properties: Recast.types.namedTypes.ClassProperty[] = [];
 
 		for (const part of parts) {
@@ -98,7 +98,7 @@ export abstract class EventGenerator extends Generator {
 			builders.exportNamedDeclaration(
 				builders.classDeclaration(
 					builders.identifier(getCamelCaseName(this.getEventName())),
-					builders.classBody(this.parsePropertyMap(this.option.property)),
+					builders.classBody(this.parsePropertyMap(this.option.property || '')),
 					builders.identifier(this.getSpecImportedKey()),
 				),
 			),
@@ -170,7 +170,7 @@ export abstract class ExternalEventGenerator extends EventGenerator {
 
 	generateSource(): string {
 		if (this.option.extends) {
-			const extending = getCamelCaseName(this.option.extends);
+			const extending = getCamelCaseName(`${this.option.extends}-event`);
 
 			const ast = parseTypescriptToAst('');
 			const builders = Recast.types.builders;
@@ -192,6 +192,8 @@ export abstract class ExternalEventGenerator extends EventGenerator {
 
 			return printTypeScriptAstSource(ast);
 		} else {
+			if (!this.option.name) throw new Error(`if you doesn't extends a event, the name should be provided.`);
+
 			return super.generateSource.call(this);
 		}
 	}

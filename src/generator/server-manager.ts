@@ -29,7 +29,7 @@ export class ServerManagerGenerator extends FileGenerator {
 	}
 
 	getRequiredOptionNames(): string[] {
-		return ['name', 'modulePath', 'module'];
+		return ['name', 'module'];
 	}
 
 	getModuleExportAtProperty() {
@@ -37,7 +37,13 @@ export class ServerManagerGenerator extends FileGenerator {
 	}
 
 	getTargetPath(): string {
-		return Path.join(this.getFullPathFromSource(), this.config.serverModulePath, this.option.modulePath || '', `${this.getName()}.ts`);
+		return Path.join(
+			this.getFullPathFromSource(),
+			this.config.serverModulePath,
+			this.option.modulePath || '',
+			`${this.option.module}-module`,
+			`${this.getName()}.ts`,
+		);
 	}
 
 	getName() {

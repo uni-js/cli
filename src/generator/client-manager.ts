@@ -33,7 +33,7 @@ export class ClientManagerGenerator extends FileGenerator {
 	}
 
 	getRequiredOptionNames(): string[] {
-		return ['name', 'modulePath', 'module'];
+		return ['name', 'module'];
 	}
 
 	getTargetPath(): string {

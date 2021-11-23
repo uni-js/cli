@@ -10,7 +10,7 @@ import { ClientControllerGenerator, AddClientExternalEventHandlerGenerator } fro
 import { ServerControllerGenerator, AddServerExternalEventHandlerGenerator } from './server-controller';
 
 import { ConfigGeneratorImpl } from './spec';
-import { ClientModuleGenerator } from './module';
+import { ClientModuleGenerator, ServerModuleGenerator } from './module';
 
 export const Generators: ConfigGeneratorImpl[] = [
 	ClientManagerGenerator,
@@ -24,4 +24,5 @@ export const Generators: ConfigGeneratorImpl[] = [
 	AddClientExternalEventHandlerGenerator,
 	AddServerExternalEventHandlerGenerator,
 	ClientModuleGenerator,
+	ServerModuleGenerator,
 ];
